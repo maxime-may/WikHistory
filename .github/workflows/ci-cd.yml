@@ -1,4 +1,4 @@
-name: Full CI/CD
+name: Full CI/CD with Docker Compose (Gradle)
 
 on:
   push:
@@ -7,50 +7,32 @@ on:
     branches: [ main ]
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
-    services:
-      db:
-        image: postgres:15
-        ports:
-          - 5432:5432
-        env:
-          POSTGRES_USER: test
-          POSTGRES_PASSWORD: test
-          POSTGRES_DB: testdb
-        options: >-
-          --health-cmd "pg_isready -U test"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
     steps:
+      # ---------------- Checkout ----------------
       - name: Checkout parent repo with submodules
         uses: actions/checkout@v3
         with:
-          submodules: recursive  # Important: initialize submodules
+          submodules: recursive
 
-      # ---------------- Backend ----------------
+      # ---------------- Backend (Gradle) ----------------
       - name: Set up JDK
         uses: actions/setup-java@v3
         with:
           distribution: temurin
           java-version: 24
 
-      - name: Build Backend
+      - name: Build Backend with Gradle
         working-directory: backend
-        run: mvn clean install
+        run: ./gradlew clean build --no-daemon
 
-      - name: Test Backend
+      - name: Run Backend Tests
         working-directory: backend
-        run: mvn test
+        run: ./gradlew test --no-daemon
 
-      - name: Build Backend Docker Image
-        working-directory: backend
-        run: docker build -t my-backend:latest .
-
-      # ---------------- Frontend ----------------
+      # ---------------- Frontend (Angular) ----------------
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
@@ -68,23 +50,21 @@ jobs:
         working-directory: frontend
         run: npm run build --prod
 
-      - name: Build Frontend Docker Image
-        working-directory: frontend
-        run: docker build -t my-frontend:latest .
+      # ---------------- Docker Compose ----------------
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-      # ---------------- Optional: Push Docker Images ----------------
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-
-      - name: Push Backend Docker Image
+      - name: Build and Start Services with Docker Compose
         run: |
-          docker tag my-backend:latest wikHistory/backend:latest
-          docker push wikHistory/backend:latest
+          docker-compose -f docker-compose.yml build
+          docker-compose -f docker-compose.yml up -d
 
-      - name: Push Frontend Docker Image
+      # ---------------- Optional: Integration Tests ----------------
+      - name: Run Integration Tests
         run: |
-          docker tag my-frontend:latest wikHistory/frontend:latest
-          docker push wikHistory/frontend:latest
+          echo "Add integration tests against running backend/frontend if needed"
+
+      # ---------------- Tear Down ----------------
+      - name: Tear Down Docker Compose
+        if: always()
+        run: docker-compose down
