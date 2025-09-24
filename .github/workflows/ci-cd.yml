@@ -28,7 +28,6 @@ jobs:
       - name: Debug DB hostname
         run: |
           echo "Service hostname: ${{ job.services.db.hostname }}"
-      
 
       # ---------------- Checkout ----------------
       - name: Checkout repository
@@ -45,18 +44,17 @@ jobs:
       # ---------------- Wait for Postgres ----------------
       - name: Wait for Postgres
         run: |
-          until pg_isready -h localhost -p 5432 -U test; do
-            echo "Waiting for Postgres..."
+          echo "Waiting for Postgres at db..."
+          for i in {1..20}; do
+            pg_isready -h db -p 5432 -U test && break
+            echo "Postgres not ready yet..."
             sleep 5
           done
 
       # ---------------- Backend (Gradle) ----------------
       - name: Build Backend
         working-directory: backend
-        env:
-          DB_HOST: ${{ job.services.db.hostname }}
-        run: ./gradlew clean build --no-daemon -Dspring.datasource.url=jdbc:postgresql://$DB_HOST:5432/testdb
-
+        run: ./gradlew clean build --no-daemon
 
       # ---------------- Frontend (Angular) ----------------
       - name: Set up Node.js 20
