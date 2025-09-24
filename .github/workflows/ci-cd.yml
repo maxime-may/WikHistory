@@ -25,10 +25,6 @@ jobs:
           --health-retries 5
 
     steps:
-      - name: Debug DB hostname
-        run: |
-          echo "Service hostname: ${{ job.services.db.hostname }}"
-
       # ---------------- Checkout ----------------
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -41,12 +37,11 @@ jobs:
         with:
           release: '24'
 
-      # ---------------- Wait for Postgres ----------------
       - name: Wait for Postgres
         run: |
-          echo "Waiting for Postgres at db..."
+          echo "Waiting for Postgres at localhost:5432..."
           for i in {1..20}; do
-            pg_isready -h db -p 5432 -U test && break
+            pg_isready -h localhost -p 5432 -U test && break
             echo "Postgres not ready yet..."
             sleep 5
           done
