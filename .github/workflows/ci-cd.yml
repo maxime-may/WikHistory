@@ -46,7 +46,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: temurin
-          java-version: 21
+          java-version: 17
 
       - name: Build Backend with Gradle
         working-directory: backend
