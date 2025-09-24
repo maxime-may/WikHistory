@@ -39,7 +39,7 @@ jobs:
 
       - name: Check Postgres
         run: |
-          apt-get update && apt-get install -y postgresql-client
+          sudo apt-get update && sudo apt-get install -y postgresql-client
           for i in {1..20}; do
             psql -h localhost -U test -d testdb -c '\l' && break
             echo "Postgres not ready yet..."
