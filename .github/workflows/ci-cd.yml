@@ -37,11 +37,11 @@ jobs:
         with:
           release: '24'
 
-      - name: Wait for Postgres
+      - name: Check Postgres
         run: |
-          echo "Waiting for Postgres at localhost:5432..."
+          apt-get update && apt-get install -y postgresql-client
           for i in {1..20}; do
-            pg_isready -h localhost -p 5432 -U test && break
+            psql -h localhost -U test -d testdb -c '\l' && break
             echo "Postgres not ready yet..."
             sleep 5
           done
