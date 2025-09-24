@@ -25,6 +25,11 @@ jobs:
           --health-retries 5
 
     steps:
+      - name: Debug DB hostname
+        run: |
+          echo "Service hostname: ${{ job.services.db.hostname }}"
+      
+
       # ---------------- Checkout ----------------
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -48,11 +53,10 @@ jobs:
       # ---------------- Backend (Gradle) ----------------
       - name: Build Backend
         working-directory: backend
-        run: ./gradlew clean build --no-daemon
+        env:
+          DB_HOST: ${{ job.services.db.hostname }}
+        run: ./gradlew clean build --no-daemon -Dspring.datasource.url=jdbc:postgresql://$DB_HOST:5432/testdb
 
-      - name: Run Backend Tests
-        working-directory: backend
-        run: ./gradlew test --no-daemon
 
       # ---------------- Frontend (Angular) ----------------
       - name: Set up Node.js 20
