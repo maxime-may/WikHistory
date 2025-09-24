@@ -1,4 +1,4 @@
-name: Full CI/CD with Docker Compose (Gradle & Angular)
+name: Full CI/CD with Docker Compose (Java 24, Gradle & Angular)
 
 on:
   push:
@@ -22,7 +22,7 @@ jobs:
           --health-cmd "pg_isready -U test"
           --health-interval 10s
           --health-timeout 5s
-          --health-retries 5
+          --health-retries 10
 
     steps:
       # ---------------- Checkout ----------------
@@ -35,13 +35,12 @@ jobs:
       - name: Set up JDK 24
         uses: oracle-actions/setup-java@v1.4.0
         with:
-          distribution: 'oracle.com'
           release: '24'
 
       # ---------------- Wait for Postgres ----------------
       - name: Wait for Postgres
         run: |
-          until pg_isready -h localhost -p 5432 -U test; do
+          until pg_isready -h db -p 5432 -U test; do
             echo "Waiting for Postgres..."
             sleep 5
           done
@@ -53,6 +52,10 @@ jobs:
 
       - name: Run Backend Tests
         working-directory: backend
+        env:
+          SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/testdb
+          SPRING_DATASOURCE_USERNAME: test
+          SPRING_DATASOURCE_PASSWORD: test
         run: ./gradlew test --no-daemon
 
       # ---------------- Frontend (Angular) ----------------
@@ -85,7 +88,7 @@ jobs:
       # ---------------- Optional: Integration Tests ----------------
       - name: Run Integration Tests
         run: |
-          echo "Run integration tests here against the running services"
+          echo "Add integration tests against running backend/frontend if needed"
 
       # ---------------- Tear Down ----------------
       - name: Tear Down Docker Compose
