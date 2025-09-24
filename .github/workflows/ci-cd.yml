@@ -31,6 +31,13 @@ jobs:
         with:
           submodules: recursive
 
+      # ---------------- Set up JDK 24 ----------------
+      - name: Set up JDK 24
+        uses: oracle-actions/setup-java@v1.4.0
+        with:
+          distribution: 'oracle.com'
+          release: '24'
+
       # ---------------- Wait for Postgres ----------------
       - name: Wait for Postgres
         run: |
@@ -39,20 +46,7 @@ jobs:
             sleep 5
           done
 
-      # ---------------- Set up JDK 24 for Docker Build ----------------
-      - name: Set up JDK 24
-        uses: oracle-actions/setup-java@v1.4.0
-        with:
-          distribution: 'oracle.com'
-          release: '24'
-
       # ---------------- Backend (Gradle) ----------------
-      - name: Set up JDK 17
-        uses: actions/setup-java@v3
-        with:
-          distribution: temurin
-          java-version: 17
-
       - name: Build Backend
         working-directory: backend
         run: ./gradlew clean build --no-daemon
@@ -82,19 +76,6 @@ jobs:
       # ---------------- Docker Compose ----------------
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-
-      - name: Login to Docker Hub
-        run: |
-          if [ -n "$DOCKER_USERNAME" ] && [ -n "$DOCKER_PASSWORD" ]; then
-            echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-          else
-            echo "Docker credentials not provided, skipping login."
-          fi
-        env:
-          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-
-
 
       - name: Build and Start Services
         run: |
