@@ -17,6 +17,15 @@ jobs:
         with:
           submodules: recursive
 
+      # ---------------- Database (Postgres) ----------------
+      - name: Wait for Postgres
+        run: |
+          until pg_isready -h localhost -p 5432 -U test; do
+            echo "Waiting for Postgres..."
+            sleep 5
+          done
+
+
       # ---------------- Backend (Gradle) ----------------
       - name: Set up JDK
         uses: actions/setup-java@v3
