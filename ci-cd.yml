@@ -1,0 +1,90 @@
+name: Full CI/CD
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    services:
+      db:
+        image: postgres:15
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: testdb
+        options: >-
+          --health-cmd "pg_isready -U test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout parent repo with submodules
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive  # Important: initialize submodules
+
+      # ---------------- Backend ----------------
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: 24
+
+      - name: Build Backend
+        working-directory: backend
+        run: mvn clean install
+
+      - name: Test Backend
+        working-directory: backend
+        run: mvn test
+
+      - name: Build Backend Docker Image
+        working-directory: backend
+        run: docker build -t my-backend:latest .
+
+      # ---------------- Frontend ----------------
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
+      - name: Install Frontend Dependencies
+        working-directory: frontend
+        run: npm install
+
+      - name: Test Frontend
+        working-directory: frontend
+        run: npm test -- --watch=false --browsers=ChromeHeadless
+
+      - name: Build Angular App
+        working-directory: frontend
+        run: npm run build --prod
+
+      - name: Build Frontend Docker Image
+        working-directory: frontend
+        run: docker build -t my-frontend:latest .
+
+      # ---------------- Optional: Push Docker Images ----------------
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Push Backend Docker Image
+        run: |
+          docker tag my-backend:latest wikHistory/backend:latest
+          docker push wikHistory/backend:latest
+
+      - name: Push Frontend Docker Image
+        run: |
+          docker tag my-frontend:latest wikHistory/frontend:latest
+          docker push wikHistory/frontend:latest
