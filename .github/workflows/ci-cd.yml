@@ -136,6 +136,8 @@ jobs:
           for i in {1..20}; do
             psql -h postgres -U testuser -d testdb -c '\dt' && break
             echo "Postgres not ready yet..."
+            sleep 5
+          done
 
       - name: Build Backend
         working-directory: backend
