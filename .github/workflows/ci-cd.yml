@@ -61,14 +61,11 @@ jobs:
         working-directory: frontend
         run: npm ci
 
-      - name: Start xvfb
-        run: |
-          export DISPLAY=:99
-          nohup Xvfb :99 -screen 0 1920x1080x24 > /dev/null 2>&1 &
-
       - name: Run Frontend Tests
         working-directory: frontend
-        run: npm test --watch=false --browsers=ChromeHeadless
+        run: |
+          export DISPLAY=:99
+          npm test --watch=false --browsers=ChromeHeadless
 
       - name: Build Angular App
         working-directory: frontend
