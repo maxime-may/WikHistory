@@ -131,4 +131,4 @@ jobs:
 
       - name: Build Backend
         working-directory: backend
-        run: ./gradlew clean build -x test --no-daemon
+        run: ./gradlew clean build
