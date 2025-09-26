@@ -129,6 +129,14 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
+      - name: Check PostgreSQL Connection and Schema
+        run: |
+          sudo apt-get update && sudo apt-get install -y postgresql-client
+          export PGPASSWORD=testpass
+          for i in {1..20}; do
+            psql -h postgres -U testuser -d testdb -c '\dt' && break
+            echo "Postgres not ready yet..."
+
       - name: Build Backend
         working-directory: backend
         run: ./gradlew clean build -Dspring.profiles.active=test
