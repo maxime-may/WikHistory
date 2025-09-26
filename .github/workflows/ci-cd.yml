@@ -131,4 +131,4 @@ jobs:
 
       - name: Build Backend
         working-directory: backend
-        run: ./gradlew clean build
+        run: ./gradlew clean build -Dspring.profiles.active=test
