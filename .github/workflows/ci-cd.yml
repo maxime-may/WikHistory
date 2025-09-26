@@ -142,3 +142,20 @@ jobs:
       - name: Build Backend
         working-directory: backend
         run: ./gradlew clean build -Dspring.profiles.active=test
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
+      - name: Install Frontend Dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Run Frontend Tests
+        working-directory: frontend
+        run: npm test -- --watch=false --browsers=ChromeHeadless
+
+      - name: Build Angular App
+        working-directory: frontend
+        run: npm run build -- --prod
